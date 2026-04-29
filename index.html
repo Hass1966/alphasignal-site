@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Signal — Autonomous Trading Intelligence</title>
+<meta name="description" content="A 7-model ML ensemble with agentic AI monitoring, generating live trading signals across 366 stocks. Live since March 15, 2026. Built in Rust.">
+<meta property="og:title" content="Alpha Signal — Autonomous Trading Intelligence">
+<meta property="og:description" content="Live, auditable AI trading signals across 366 US, UK and EU stocks. Built in Rust. Six autonomous agents monitoring 24/7.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   TOKENS — Light theme, off-white + deep plum + muted teal
+   ============================================================ */
+:root {
+  /* Surfaces */
+  --bg:           #faf7f2;       /* warm off-white */
+  --bg-alt:       #f3ede2;       /* slightly deeper cream for alt sections */
+  --bg-card:      #ffffff;       /* card surfaces, sit on bg */
+  --bg-elevated:  #fbfaf6;       /* very subtle inner cards */
+
+  /* Borders */
+  --border:       #e8dfcf;       /* warm border on cream */
+  --border-soft:  #f0e9dc;       /* very soft divider */
+  --border-dark:  #1c1917;       /* hard editorial rule */
+
+  /* Text */
+  --ink:          #1c1917;       /* near-black, warm */
+  --ink-muted:    #57534e;       /* warm grey, body */
+  --ink-dim:      #8a8580;       /* labels, eyebrow */
+
+  /* Accents */
+  --plum:         #581c87;       /* deep plum, primary accent */
+  --plum-deep:    #3b0764;       /* deeper plum for hover/contrast */
+  --plum-soft:    #f3e8ff;       /* plum tint for backgrounds */
+  --teal:         #0f766e;       /* muted teal, secondary */
+  --teal-soft:    #ccfbf1;       /* teal tint */
+
+  /* Semantic */
+  --green:        #15803d;
+  --red:          #b91c1c;
+  --amber:        #b45309;
+
+  /* Type */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Inter Tight', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  /* Layout */
+  --r:    8px;
+  --r-lg: 14px;
+  --r-sm: 4px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+a { color:inherit; text-decoration:none; }
+img,svg { max-width:100%; display:block; }
+button { font: inherit; cursor: pointer; }
+
+/* ============================================================
+   PAPER TEXTURE — subtle warmth on the off-white
+   ============================================================ */
+body::before {
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(88,28,135,0.025) 0%, transparent 40%),
+    radial-gradient(circle at 85% 70%, rgba(15,118,110,0.02) 0%, transparent 35%);
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 68px;
+  background: rgba(250, 247, 242, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--plum);
+  box-shadow: 0 0 0 4px rgba(88,28,135,0.12);
+  animation: pulse 2.6s var(--ease) infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: 0.6; transform: scale(0.85); }
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+  align-items: center;
+}
+.nav-links a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: color 0.2s var(--ease);
+}
+.nav-links a:hover { color: var(--plum); }
+.nav-cta {
+  padding: 9px 18px;
+  border-radius: var(--r);
+  background: var(--ink);
+  color: var(--bg) !important;
+  font-size: 0.825rem !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background 0.2s var(--ease);
+}
+.nav-cta:hover { background: var(--plum) !important; color: white !important; }
+
+.nav-burger {
+  display: none;
+  background: none;
+  border: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+}
+.nav-burger span {
+  width: 22px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: all 0.25s var(--ease);
+}
+.nav-mobile {
+  display: none;
+  position: fixed;
+  top: 68px; left: 0; right: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 24px 32px;
+  z-index: 99;
+}
+.nav-mobile.open { display: block; }
+.nav-mobile a {
+  display: block;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.nav-mobile a:last-child { border-bottom: none; }
+
+/* ============================================================
+   LAYOUT PRIMITIVES
+   ============================================================ */
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 1;
+}
+.section {
+  padding: 120px 0;
+  position: relative;
+  z-index: 1;
+}
+.section-alt {
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--plum);
+  margin-bottom: 20px;
+}
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--plum);
+}
+.section-h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 24px;
+  font-variation-settings: "opsz" 96;
+}
+.section-h2 em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--plum);
+  font-variation-settings: "opsz" 96;
+}
+.section-lead {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 680px;
+  margin-bottom: 60px;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  padding: 160px 0 100px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  margin-bottom: 36px;
+}
+.hero-eyebrow .live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(21,128,61,0.15);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+.hero-h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 7vw, 5.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  margin-bottom: 32px;
+  max-width: 14ch;
+  font-variation-settings: "opsz" 144;
+}
+.hero-h1 em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--plum);
+}
+.hero-h1 .underline {
+  background-image: linear-gradient(transparent 65%, rgba(88,28,135,0.18) 65%);
+  background-size: 100% 100%;
+}
+.hero-sub {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  max-width: 580px;
+  margin-bottom: 44px;
+}
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 80px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: var(--r);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition: all 0.2s var(--ease);
+  border: 1px solid transparent;
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn-primary:hover {
+  background: var(--plum);
+  transform: translateY(-1px);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.btn-outline:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn-arrow {
+  transition: transform 0.2s var(--ease);
+}
+.btn:hover .btn-arrow {
+  transform: translateX(3px);
+}
+
+/* Hero stats grid */
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+}
+.hstat {
+  padding: 28px 24px 28px 0;
+  border-right: 1px solid var(--border);
+}
+.hstat:last-child { border-right: none; padding-right: 0; }
+.hstat:first-child { padding-left: 0; }
+.hstat:not(:first-child) { padding-left: 24px; }
+.hstat-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+}
+.hstat-value {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 8px;
+  font-variation-settings: "opsz" 96;
+}
+.hstat-value.plum { color: var(--plum); }
+.hstat-value.teal { color: var(--teal); }
+.hstat-sub {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+/* Decorative hero element — corner mark */
+.hero-mark {
+  position: absolute;
+  top: 110px;
+  right: -40px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 18rem;
+  line-height: 1;
+  color: rgba(88,28,135,0.045);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   PROOF STRIP — quick credibility row
+   ============================================================ */
+.proof-strip {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 28px 0;
+  overflow: hidden;
+}
+.proof-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+.proof-item {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: rgba(250,247,242,0.75);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.proof-item strong {
+  color: var(--bg);
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   SIGNAL PIPELINE — first diagram section
+   ============================================================ */
+.diagram-frame {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 48px 32px;
+  margin-top: 40px;
+  position: relative;
+}
+.diagram-frame::before {
+  content: "FIG. 01";
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
+}
+.diagram-caption {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   STAGE EXPLAINERS — pipeline detail cards
+   ============================================================ */
+.stages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 60px;
+  border-top: 1px solid var(--border-dark);
+}
+.stage {
+  padding: 32px 24px 32px 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stage:nth-child(3n) { border-right: none; padding-right: 0; }
+.stage:nth-child(n+4) { padding-top: 36px; }
+.stage:not(:nth-child(3n+1)) { padding-left: 24px; }
+.stage-num {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--plum);
+  margin-bottom: 16px;
+}
+.stage-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.stage-body {
+  font-size: 0.94rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+.stage-body strong { color: var(--ink); font-weight: 600; }
+
+/* ============================================================
+   MODELS — three model architecture
+   ============================================================ */
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 16px;
+}
+.model-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px 28px;
+  position: relative;
+  transition: all 0.3s var(--ease);
+}
+.model-card:hover {
+  border-color: var(--plum);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -12px rgba(88,28,135,0.15);
+}
+.model-card-num {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  margin-bottom: 20px;
+}
+.model-card-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+  color: var(--plum);
+  margin-bottom: 10px;
+  font-variation-settings: "opsz" 72;
+}
+.model-card-tag {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  padding: 4px 10px;
+  background: var(--bg-alt);
+  border-radius: var(--r-sm);
+  display: inline-block;
+  margin-bottom: 18px;
+}
+.model-card-desc {
+  font-size: 0.93rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.stacking-callout {
+  margin-top: 32px;
+  padding: 28px 32px;
+  background: var(--plum-soft);
+  border-left: 3px solid var(--plum);
+  border-radius: 0 var(--r-lg) var(--r-lg) 0;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.stacking-callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--plum);
+  margin-bottom: 6px;
+}
+.stacking-callout p {
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0;
+}
+.stacking-callout p strong { color: var(--plum-deep); }
+
+/* ============================================================
+   WALK-FORWARD SECTION — diagram + content side by side
+   ============================================================ */
+.walk-forward-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 60px;
+  margin-top: 40px;
+  align-items: center;
+}
+.wf-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.wf-point {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+}
+.wf-marker {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--plum-soft);
+  color: var(--plum);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wf-text {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  padding-top: 4px;
+}
+.wf-text strong { color: var(--ink); font-weight: 600; }
+
+/* ============================================================
+   AGENT FLEET
+   ============================================================ */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 40px;
+  border-top: 1px solid var(--border-dark);
+  border-left: 1px solid var(--border);
+}
+.agent-card {
+  padding: 32px 28px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: white;
+  transition: background 0.25s var(--ease);
+  position: relative;
+}
+.agent-card:hover { background: var(--bg-elevated); }
+.agent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.agent-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(21,128,61,0.15);
+}
+.agent-cadence {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+  padding: 3px 8px;
+  background: var(--bg-alt);
+  border-radius: var(--r-sm);
+}
+.agent-body {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.agent-foot {
+  margin-top: 32px;
+  padding: 20px 24px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 0.92rem;
+  color: var(--ink-muted);
+  line-height: 1.55;
+  font-style: italic;
+}
+.agent-foot strong { color: var(--ink); font-style: normal; font-weight: 600; }
+
+/* ============================================================
+   ARCHITECTURE DIAGRAM SECTION
+   ============================================================ */
+.arch-frame {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 56px 40px;
+  margin-top: 40px;
+  position: relative;
+  overflow-x: auto;
+}
+.arch-frame::before {
+  content: "FIG. 03";
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
+}
+
+/* ============================================================
+   RESULTS — performance table & screenshot
+   ============================================================ */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  margin-top: 40px;
+  align-items: start;
+}
+.results-table {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.results-table-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.results-table-row:last-child { border-bottom: none; }
+.results-table-row:nth-child(even) { background: var(--bg-elevated); }
+.rt-label {
+  font-size: 0.92rem;
+  color: var(--ink-muted);
+}
+.rt-value {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variation-settings: "opsz" 60;
+}
+.rt-value.green { color: var(--green); }
+.rt-value.plum { color: var(--plum); }
+
+.results-screenshot {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  position: relative;
+}
+.results-screenshot::before {
+  content: "DASHBOARD · LIVE";
+  position: absolute;
+  top: -10px;
+  left: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  background: var(--bg-alt);
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.screenshot-svg {
+  width: 100%;
+  height: auto;
+}
+.screenshot-caption {
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  line-height: 1.6;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.results-context {
+  margin-top: 40px;
+  padding: 28px 32px;
+  background: var(--bg-elevated);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 var(--r) var(--r) 0;
+}
+.results-context p {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+}
+.results-context p strong { color: var(--ink); }
+
+/* ============================================================
+   COMPARISON TABLE — Why Different
+   ============================================================ */
+.compare-table {
+  margin-top: 40px;
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.compare-table th,
+.compare-table td {
+  padding: 18px 22px;
+  text-align: left;
+  font-size: 0.92rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+.compare-table thead {
+  background: var(--bg-alt);
+}
+.compare-table th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.compare-table th.us {
+  color: var(--plum);
+}
+.compare-table tbody tr:last-child td { border-bottom: none; }
+.compare-table tbody td {
+  color: var(--ink-muted);
+}
+.compare-table tbody td.us {
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--plum-soft);
+}
+
+/* ============================================================
+   TECH STACK
+   ============================================================ */
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 40px;
+}
+.tech-item {
+  padding: 24px 22px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  transition: all 0.2s var(--ease);
+}
+.tech-item:hover {
+  border-color: var(--plum);
+  transform: translateY(-2px);
+}
+.tech-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 8px;
+}
+.tech-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.015em;
+}
+.tech-desc {
+  font-size: 0.84rem;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   FOOTER CTA
+   ============================================================ */
+.cta-block {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+}
+.cta-block::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(88,28,135,0.4) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(15,118,110,0.3) 0%, transparent 40%);
+}
+.cta-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 32px;
+  text-align: center;
+}
+.cta-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(250,247,242,0.6);
+  margin-bottom: 24px;
+}
+.cta-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--bg);
+  margin-bottom: 24px;
+  font-variation-settings: "opsz" 144;
+}
+.cta-h2 em {
+  font-style: italic;
+  color: #d8b4fe;
+  font-weight: 300;
+}
+.cta-sub {
+  font-size: 1.1rem;
+  color: rgba(250,247,242,0.75);
+  margin-bottom: 40px;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cta-btns {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-light {
+  background: var(--bg);
+  color: var(--ink);
+}
+.btn-light:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--bg);
+  border-color: rgba(250,247,242,0.3);
+}
+.btn-ghost:hover {
+  background: rgba(250,247,242,0.1);
+  border-color: var(--bg);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  padding: 48px 32px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.footer-brand {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.footer-brand-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--plum);
+}
+.footer-meta {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+.footer-meta a {
+  color: var(--plum);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(88,28,135,0.4);
+}
+.footer-meta a:hover {
+  text-decoration-color: var(--plum);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 980px) {
+  .nav-links { display: none; }
+  .nav-burger { display: flex; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .hstat:nth-child(2) { border-right: none; padding-right: 0; }
+  .hstat:nth-child(3) { padding-left: 0; border-bottom: 1px solid var(--border); padding-top: 28px; }
+  .hstat:nth-child(4) { padding-top: 28px; }
+  .hstat:nth-child(1), .hstat:nth-child(2) { border-bottom: 1px solid var(--border); padding-bottom: 28px; }
+  .stages { grid-template-columns: 1fr; }
+  .stage { border-right: none !important; padding-right: 0 !important; padding-left: 0 !important; }
+  .models-grid { grid-template-columns: 1fr; }
+  .agents-grid { grid-template-columns: 1fr; }
+  .agent-card { border-right: none !important; }
+  .walk-forward-grid { grid-template-columns: 1fr; gap: 40px; }
+  .results-grid { grid-template-columns: 1fr; gap: 40px; }
+  .tech-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-mark { display: none; }
+}
+@media (max-width: 640px) {
+  .section { padding: 80px 0; }
+  .hero { padding: 130px 0 70px; }
+  .wrap { padding: 0 24px; }
+  .nav-inner { padding: 0 24px; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .hstat { border-right: none !important; padding: 22px 0 !important; border-bottom: 1px solid var(--border); }
+  .hstat:last-child { border-bottom: none; }
+  .compare-table { font-size: 0.85rem; }
+  .compare-table th, .compare-table td { padding: 14px 16px; }
+  .tech-grid { grid-template-columns: 1fr; }
+  .diagram-frame, .arch-frame { padding: 24px 16px; }
+  .stacking-callout { flex-direction: column; align-items: flex-start; padding: 22px 24px; }
+}
+
+/* ============================================================
+   FADE-IN ANIMATIONS ON SCROLL
+   ============================================================ */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <span class="nav-brand-dot"></span>
+      Alpha Signal
+    </a>
+    <ul class="nav-links">
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#models">Models</a></li>
+      <li><a href="#agents">Agents</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#contact" class="nav-cta">Get in touch</a></li>
+    </ul>
+    <button class="nav-burger" id="burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="nav-mobile" id="mobileNav">
+  <a href="#pipeline">Pipeline</a>
+  <a href="#models">Models</a>
+  <a href="#agents">Agents</a>
+  <a href="#results">Results</a>
+  <a href="#contact">Get in touch</a>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero">
+  <div class="hero-mark">α</div>
+  <div class="wrap">
+    <div class="hero-eyebrow">
+      <span class="live-dot"></span>
+      Live since 15 March 2026 · 877 signals resolved
+    </div>
+    <h1 class="hero-h1">
+      Autonomous trading <em>intelligence</em>,<br>
+      built for an <span class="underline">honest</span> track record.
+    </h1>
+    <p class="hero-sub">
+      A 7-model machine-learning ensemble paired with six rules-based agents,
+      generating daily signals across 366 stocks in the US, UK and EU.
+      Every prediction logged. Every result resolved. No backtesting theatre.
+    </p>
+    <div class="hero-actions">
+      <a href="#results" class="btn btn-primary">
+        See the live results
+        <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#pipeline" class="btn btn-outline">How it works</a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hstat">
+        <div class="hstat-label">Actionable Accuracy</div>
+        <div class="hstat-value plum">54.8%</div>
+        <div class="hstat-sub">829 resolved signals</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Stocks Tracked</div>
+        <div class="hstat-value">366</div>
+        <div class="hstat-sub">US · UK · EU markets</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Expected Value</div>
+        <div class="hstat-value teal">+10 bps</div>
+        <div class="hstat-sub">per signal, out-of-sample</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Autonomous Agents</div>
+        <div class="hstat-value">6</div>
+        <div class="hstat-sub">monitoring 24/7</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROOF STRIP ==================== -->
+<div class="proof-strip">
+  <div class="proof-inner">
+    <div class="proof-item"><strong>Rust</strong> &nbsp;core engine</div>
+    <div class="proof-item"><strong>7-model</strong> &nbsp;ensemble per asset</div>
+    <div class="proof-item"><strong>84</strong> &nbsp;engineered features</div>
+    <div class="proof-item"><strong>Walk-forward</strong> &nbsp;validation</div>
+    <div class="proof-item"><strong>0</strong> &nbsp;lookahead bias</div>
+  </div>
+</div>
+
+<!-- ==================== SIGNAL PIPELINE ==================== -->
+<section class="section" id="pipeline">
+  <div class="wrap">
+    <span class="eyebrow">The signal pipeline</span>
+    <h2 class="section-h2">From raw market data<br>to a calibrated <em>decision</em>.</h2>
+    <p class="section-lead">
+      Every Alpha Signal prediction follows the same path. Six discrete stages, each with its own
+      validation. The first model generation produced 36% accuracy. Honest measurement and small,
+      compounding refinements brought it to where it is now.
+    </p>
+
+    <!-- DIAGRAM 1: Signal Pipeline -->
+    <div class="diagram-frame">
+      <svg class="screenshot-svg" viewBox="0 0 1100 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Signal pipeline flow diagram">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#581c87"/>
+          </marker>
+        </defs>
+        <!-- Stage boxes -->
+        <g font-family="Inter Tight, sans-serif" font-size="13" fill="#1c1917">
+          <!-- Stage 1: Data -->
+          <rect x="10" y="60" width="155" height="100" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="87.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1">01 · DATA</text>
+          <text x="87.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500">Ingest</text>
+          <text x="87.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">Polygon · Yahoo</text>
+          <text x="87.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">FRED · NewsAPI</text>
+
+          <!-- Stage 2: Features -->
+          <rect x="190" y="60" width="155" height="100" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="267.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1">02 · FEATURES</text>
+          <text x="267.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500">Engineer</text>
+          <text x="267.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">84 features</text>
+          <text x="267.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">technical · macro · cross</text>
+
+          <!-- Stage 3: Ensemble -->
+          <rect x="370" y="60" width="155" height="100" rx="8" fill="#f3e8ff" stroke="#581c87" stroke-width="1.5"/>
+          <text x="447.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#581c87" letter-spacing="1">03 · ENSEMBLE</text>
+          <text x="447.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500" fill="#3b0764">Predict</text>
+          <text x="447.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">Ridge · LightGBM</text>
+          <text x="447.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">GRU · Stacker</text>
+
+          <!-- Stage 4: Confidence -->
+          <rect x="550" y="60" width="155" height="100" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="627.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1">04 · CONFIDENCE</text>
+          <text x="627.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500">Score</text>
+          <text x="627.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">0–26 scale</text>
+          <text x="627.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">Platt-calibrated</text>
+
+          <!-- Stage 5: Signal -->
+          <rect x="730" y="60" width="155" height="100" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="807.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1">05 · SIGNAL</text>
+          <text x="807.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500">Emit</text>
+          <text x="807.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">BUY · SELL</text>
+          <text x="807.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">SHORT · HOLD</text>
+
+          <!-- Stage 6: Resolve -->
+          <rect x="910" y="60" width="155" height="100" rx="8" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+          <text x="987.5" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#0f766e" letter-spacing="1">06 · RESOLVE</text>
+          <text x="987.5" y="115" text-anchor="middle" font-family="Fraunces, serif" font-size="16" font-weight="500" fill="#0f766e">Verify</text>
+          <text x="987.5" y="135" text-anchor="middle" font-size="11" fill="#57534e">4hr later</text>
+          <text x="987.5" y="150" text-anchor="middle" font-size="11" fill="#57534e">vs real prices</text>
+
+          <!-- Arrows between stages -->
+          <line x1="167" y1="110" x2="186" y2="110" stroke="#581c87" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <line x1="347" y1="110" x2="366" y2="110" stroke="#581c87" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <line x1="527" y1="110" x2="546" y2="110" stroke="#581c87" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <line x1="707" y1="110" x2="726" y2="110" stroke="#581c87" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <line x1="887" y1="110" x2="906" y2="110" stroke="#581c87" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- Top label -->
+          <text x="540" y="30" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#8a8580" letter-spacing="1.5">SIGNAL PIPELINE · END-TO-END</text>
+          <line x1="350" y1="40" x2="730" y2="40" stroke="#e8dfcf" stroke-width="1"/>
+
+          <!-- Bottom annotation -->
+          <text x="540" y="195" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" font-style="italic">Every signal logged with timestamp · Resolved against real market data · No re-runs, no edits</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">
+        <strong>Fig. 01 · Signal pipeline.</strong> Data flows left-to-right through six validated stages.
+        Stage 03 (ensemble) and stage 06 (resolution) are highlighted as the two places where the
+        system either commits to a prediction or commits to scoring itself honestly.
+      </div>
+    </div>
+
+    <!-- Stage explainers -->
+    <div class="stages">
+      <div class="stage">
+        <div class="stage-num">01 — DATA</div>
+        <h3 class="stage-title">Free, public market data.</h3>
+        <p class="stage-body">
+          Daily OHLCV from <strong>Polygon.io</strong> and <strong>Yahoo Finance</strong>. Macro from
+          FRED, BoE, ECB. News sentiment via Claude. No Bloomberg terminal. No paid feeds. The point
+          was always to see how far you can get on the public layer alone.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-num">02 — FEATURES</div>
+        <h3 class="stage-title">84 engineered features.</h3>
+        <p class="stage-body">
+          Technical (RSI, MACD, Bollinger), momentum across five horizons, volatility ratios, volume
+          dynamics, sector context, macro indicators (yield curve, HY spreads, breakevens), and
+          cross-asset signals like gold-dollar ratios.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-num">03 — ENSEMBLE</div>
+        <h3 class="stage-title">Three architectures, one decision.</h3>
+        <p class="stage-body">
+          <strong>Ridge</strong> for a stable linear baseline. <strong>LightGBM</strong> for non-linear
+          interactions. <strong>GRU</strong> for temporal patterns over 5-day windows. A stacking
+          meta-learner combines them, then Platt scaling calibrates the probabilities.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-num">04 — CONFIDENCE</div>
+        <h3 class="stage-title">A 0–26 score, not a probability.</h3>
+        <p class="stage-body">
+          Combines ensemble probability, model agreement, and historical walk-forward accuracy
+          per-asset. Confidence determines <em>eligibility</em> to trade. Position size is set
+          separately, by inverse-volatility weighting.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-num">05 — SIGNAL</div>
+        <h3 class="stage-title">Four outputs. HOLD is honest.</h3>
+        <p class="stage-body">
+          <strong>BUY</strong>, <strong>SELL</strong>, <strong>SHORT</strong>, or <strong>HOLD</strong>.
+          HOLDs are excluded from accuracy maths because the system saying "I don't know" should not be
+          counted as either right or wrong.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-num">06 — RESOLVE</div>
+        <h3 class="stage-title">Scored against real prices.</h3>
+        <p class="stage-body">
+          Every signal is resolved 4+ hours later against actual market prices. A 0.5% minimum
+          movement threshold prevents noise from being counted as correctness. The result is stored
+          and never re-touched.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== MODELS ==================== -->
+<section class="section section-alt" id="models">
+  <div class="wrap">
+    <span class="eyebrow">The ensemble</span>
+    <h2 class="section-h2">Three model families.<br>Combined by a <em>meta-learner</em>.</h2>
+    <p class="section-lead">
+      No single model wins on every market regime. The ensemble is built on the idea that
+      different architectures capture different patterns — and that learning <em>which model to trust
+      when</em> is itself a model worth training.
+    </p>
+
+    <div class="models-grid">
+      <div class="model-card">
+        <div class="model-card-num">M1 · LINEAR</div>
+        <h3 class="model-card-name">Ridge Regression</h3>
+        <span class="model-card-tag">closed-form solution</span>
+        <p class="model-card-desc">
+          A fast, stable baseline. Closed-form so it trains in milliseconds. Catches the linear
+          slice of the signal that any sensible system has to capture before it claims anything
+          fancier.
+        </p>
+      </div>
+      <div class="model-card">
+        <div class="model-card-num">M2 · TREES</div>
+        <h3 class="model-card-name">LightGBM</h3>
+        <span class="model-card-tag">gradient-boosted trees</span>
+        <p class="model-card-desc">
+          Non-linear feature interactions. Handles mixed feature types and missing values
+          gracefully. The workhorse for capturing the bulk of the predictive structure in the data.
+        </p>
+      </div>
+      <div class="model-card">
+        <div class="model-card-num">M3 · NEURAL</div>
+        <h3 class="model-card-name">GRU Network</h3>
+        <span class="model-card-tag">recurrent · 5-day sequence</span>
+        <p class="model-card-desc">
+          Reads the last five days as an ordered sequence rather than a flat feature vector.
+          Picks up momentum and reversal patterns that aggregate features alone tend to flatten out.
+        </p>
+      </div>
+    </div>
+
+    <div class="stacking-callout">
+      <div>
+        <div class="stacking-callout-label">META-LEARNER</div>
+        <p>
+          A <strong>logistic regression stacker</strong> trained on out-of-fold predictions from each
+          base model. It learns which models to weight in which conditions, then a final
+          <strong>Platt scaling</strong> step ensures the output probability matches real-world frequency.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== WALK-FORWARD ==================== -->
+<section class="section" id="walkforward">
+  <div class="wrap">
+    <span class="eyebrow">Validation</span>
+    <h2 class="section-h2">Walk-forward only.<br>No <em>lookahead</em>, no theatre.</h2>
+    <p class="section-lead">
+      The most common failure mode of trading systems is models that have already seen the test data
+      during development. Alpha Signal's training is structured to make that impossible.
+    </p>
+
+    <div class="walk-forward-grid">
+      <!-- DIAGRAM 2: Walk-forward visualisation -->
+      <div class="diagram-frame">
+        <svg class="screenshot-svg" viewBox="0 0 540 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Walk-forward training diagram">
+          <defs>
+            <pattern id="diag" patternUnits="userSpaceOnUse" width="6" height="6">
+              <path d="M-1,1 l2,-2 M0,6 l6,-6 M5,7 l2,-2" stroke="#0f766e" stroke-width="0.6"/>
+            </pattern>
+          </defs>
+          <g font-family="JetBrains Mono, monospace" font-size="10" fill="#1c1917">
+            <!-- Time axis -->
+            <line x1="40" y1="270" x2="510" y2="270" stroke="#1c1917" stroke-width="1"/>
+            <text x="40" y="290" font-size="10" fill="#8a8580">2020</text>
+            <text x="270" y="290" font-size="10" fill="#8a8580" text-anchor="middle">time →</text>
+            <text x="510" y="290" font-size="10" fill="#8a8580" text-anchor="end">2026</text>
+
+            <!-- Top label -->
+            <text x="270" y="25" text-anchor="middle" font-size="11" fill="#8a8580" letter-spacing="1.5">EXPANDING WINDOW · TRAIN GROWS, TEST MOVES FORWARD</text>
+
+            <!-- Window 1 -->
+            <text x="20" y="62" font-size="9" fill="#8a8580">FOLD 1</text>
+            <rect x="60" y="50" width="170" height="22" fill="#581c87" rx="2"/>
+            <text x="145" y="65" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="500">TRAIN</text>
+            <rect x="232" y="50" width="80" height="22" fill="url(#diag)" stroke="#0f766e" stroke-width="1" rx="2"/>
+            <text x="272" y="65" text-anchor="middle" fill="#0f766e" font-size="10" font-weight="500">TEST</text>
+
+            <!-- Window 2 -->
+            <text x="20" y="102" font-size="9" fill="#8a8580">FOLD 2</text>
+            <rect x="60" y="90" width="220" height="22" fill="#581c87" rx="2"/>
+            <text x="170" y="105" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="500">TRAIN (expanded)</text>
+            <rect x="282" y="90" width="80" height="22" fill="url(#diag)" stroke="#0f766e" stroke-width="1" rx="2"/>
+            <text x="322" y="105" text-anchor="middle" fill="#0f766e" font-size="10" font-weight="500">TEST</text>
+
+            <!-- Window 3 -->
+            <text x="20" y="142" font-size="9" fill="#8a8580">FOLD 3</text>
+            <rect x="60" y="130" width="270" height="22" fill="#581c87" rx="2"/>
+            <text x="195" y="145" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="500">TRAIN (expanded)</text>
+            <rect x="332" y="130" width="80" height="22" fill="url(#diag)" stroke="#0f766e" stroke-width="1" rx="2"/>
+            <text x="372" y="145" text-anchor="middle" fill="#0f766e" font-size="10" font-weight="500">TEST</text>
+
+            <!-- Window N -->
+            <text x="20" y="182" font-size="9" fill="#8a8580">…</text>
+
+            <!-- Live -->
+            <text x="20" y="222" font-size="9" fill="#8a8580">LIVE</text>
+            <rect x="60" y="210" width="350" height="22" fill="#581c87" rx="2"/>
+            <text x="235" y="225" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="500">TRAIN (full history, recent 6mo weighted 3×)</text>
+            <rect x="412" y="210" width="98" height="22" fill="#0f766e" rx="2"/>
+            <text x="461" y="225" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="500">LIVE</text>
+
+            <!-- Fold-out brackets -->
+            <line x1="232" y1="78" x2="232" y2="206" stroke="#e8dfcf" stroke-width="1" stroke-dasharray="2,3"/>
+            <line x1="412" y1="78" x2="412" y2="206" stroke="#e8dfcf" stroke-width="1" stroke-dasharray="2,3"/>
+          </g>
+        </svg>
+      </div>
+
+      <ul class="wf-points">
+        <li class="wf-point">
+          <div class="wf-marker">1</div>
+          <div class="wf-text">
+            <strong>Models train on history, test on the future.</strong>
+            The training window expands forward through time. Each test window is data the model
+            has never seen.
+          </div>
+        </li>
+        <li class="wf-point">
+          <div class="wf-marker">2</div>
+          <div class="wf-text">
+            <strong>Per-fold normalisation.</strong>
+            Statistics like means and standard deviations are computed within each training window
+            only — never across train/test boundaries.
+          </div>
+        </li>
+        <li class="wf-point">
+          <div class="wf-marker">3</div>
+          <div class="wf-text">
+            <strong>Recent data weighted 3×.</strong>
+            The most recent six months of training data is weighted heavily so the model adapts to
+            evolving regime, without ignoring deeper history.
+          </div>
+        </li>
+        <li class="wf-point">
+          <div class="wf-marker">4</div>
+          <div class="wf-text">
+            <strong>The live track record is 100% out-of-sample.</strong>
+            Since 15 March 2026, every signal has been generated by a model trained only on
+            data older than the prediction. Nothing else is acceptable.
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== AGENTS ==================== -->
+<section class="section section-alt" id="agents">
+  <div class="wrap">
+    <span class="eyebrow">The agent fleet</span>
+    <h2 class="section-h2">Six rules-based agents.<br><em>Always</em> watching.</h2>
+    <p class="section-lead">
+      The ensemble produces signals. The agent fleet decides whether to trust them. Each agent
+      runs on its own cadence, with its own audit trail. Every action — proposed, approved,
+      executed, or rejected — is logged.
+    </p>
+
+    <div class="agents-grid">
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Data Quality Sentinel</div>
+          <span class="agent-cadence">30 min</span>
+        </div>
+        <p class="agent-body">
+          Monitors data freshness across all 366 assets. Flags stale prices (&gt;24h) for refresh.
+          No signal is ever generated from stale data without explicit approval.
+        </p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Risk Guardian</div>
+          <span class="agent-cadence">60 min</span>
+        </div>
+        <p class="agent-body">
+          Watches drawdown, concentration and correlation. Triggers a global risk halt if drawdown
+          exceeds 15%. While active, all BUY signals downgrade to HOLD.
+        </p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Drift Detector</div>
+          <span class="agent-cadence">6 hr</span>
+        </div>
+        <p class="agent-body">
+          Detects when input feature distributions shift outside training range. Flags assets for
+          retraining when drift score &gt; 0.3. Stops the system predicting in unfamiliar conditions.
+        </p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Signal Arbitrator</div>
+          <span class="agent-cadence">4 hr</span>
+        </div>
+        <p class="agent-body">
+          Checks inter-model consensus. Overrides any signal where fewer than 50% of models agree.
+          Forces HOLD when disagreement is too high. Filters noise out of the pipeline.
+        </p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Portfolio Rebalancer</div>
+          <span class="agent-cadence">3 hr</span>
+        </div>
+        <p class="agent-body">
+          Monitors weight drift across the portfolio. Proposes rebalances when drift exceeds 5%.
+          Applies position caps to prevent any single asset dominating.
+        </p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-head">
+          <div class="agent-name"><span class="agent-dot"></span>Performance Analyst</div>
+          <span class="agent-cadence">12 hr</span>
+        </div>
+        <p class="agent-body">
+          Tracks rolling accuracy per asset. Detects accuracy collapse and recommends model
+          suspension when win rate falls below threshold. Computes profit factor and EV continuously.
+        </p>
+      </div>
+    </div>
+
+    <div class="agent-foot">
+      <strong>Deterministic, not black-box.</strong>
+      Every agent is rules-based. No agent makes a risk decision via a generative model. Every
+      action is logged with timestamp, reasoning and status (proposed / approved / executed /
+      rejected) for a full audit trail.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<section class="section" id="architecture">
+  <div class="wrap">
+    <span class="eyebrow">System architecture</span>
+    <h2 class="section-h2">One stack.<br>From data to <em>decision</em>.</h2>
+    <p class="section-lead">
+      Built as a single Rust binary with three modes: <code style="font-family:var(--font-mono);background:var(--bg-alt);padding:2px 8px;border-radius:4px;font-size:0.85em">train</code>,
+      <code style="font-family:var(--font-mono);background:var(--bg-alt);padding:2px 8px;border-radius:4px;font-size:0.85em">signal</code>, and
+      <code style="font-family:var(--font-mono);background:var(--bg-alt);padding:2px 8px;border-radius:4px;font-size:0.85em">serve</code>.
+      No Python orchestration, no microservices, no Kubernetes. Just a binary and a database.
+    </p>
+
+    <!-- DIAGRAM 3: System architecture -->
+    <div class="arch-frame">
+      <svg class="screenshot-svg" viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="System architecture diagram">
+        <defs>
+          <marker id="arch-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#581c87"/>
+          </marker>
+        </defs>
+        <g font-family="Inter Tight, sans-serif" fill="#1c1917">
+          <!-- Layer 1: Data Sources -->
+          <rect x="50" y="20" width="900" height="70" rx="8" fill="#fbfaf6" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="500" y="42" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1.5">LAYER 1 · DATA SOURCES</text>
+          <text x="180" y="68" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">Polygon.io</text>
+          <text x="380" y="68" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">Yahoo Finance</text>
+          <text x="580" y="68" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">FRED · BoE · ECB</text>
+          <text x="800" y="68" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">News (Claude)</text>
+
+          <line x1="500" y1="95" x2="500" y2="115" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+
+          <!-- Layer 2: Feature Engineering -->
+          <rect x="50" y="125" width="900" height="65" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="500" y="147" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1.5">LAYER 2 · FEATURE ENGINEERING (84 FEATURES)</text>
+          <text x="500" y="172" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="400" font-style="italic" fill="#57534e">Technical · Momentum · Volatility · Volume · Macro · Cross-Asset</text>
+
+          <line x1="500" y1="195" x2="500" y2="215" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+
+          <!-- Layer 3: ML Ensemble -->
+          <rect x="50" y="225" width="900" height="100" rx="8" fill="#f3e8ff" stroke="#581c87" stroke-width="1.5"/>
+          <text x="500" y="247" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#581c87" letter-spacing="1.5">LAYER 3 · ML ENSEMBLE (PER ASSET)</text>
+          <rect x="100" y="262" width="200" height="48" rx="6" fill="#ffffff" stroke="#581c87" stroke-width="1"/>
+          <text x="200" y="282" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">Ridge Regression</text>
+          <text x="200" y="300" text-anchor="middle" font-size="11" fill="#57534e">linear baseline</text>
+          <rect x="320" y="262" width="200" height="48" rx="6" fill="#ffffff" stroke="#581c87" stroke-width="1"/>
+          <text x="420" y="282" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">LightGBM</text>
+          <text x="420" y="300" text-anchor="middle" font-size="11" fill="#57534e">gradient boosting</text>
+          <rect x="540" y="262" width="200" height="48" rx="6" fill="#ffffff" stroke="#581c87" stroke-width="1"/>
+          <text x="640" y="282" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">GRU Network</text>
+          <text x="640" y="300" text-anchor="middle" font-size="11" fill="#57534e">recurrent (5d)</text>
+          <rect x="760" y="262" width="180" height="48" rx="6" fill="#581c87" stroke="#581c87" stroke-width="1"/>
+          <text x="850" y="282" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500" fill="#ffffff">Stacker + Platt</text>
+          <text x="850" y="300" text-anchor="middle" font-size="11" fill="#e9d5ff">meta-learner</text>
+
+          <line x1="500" y1="330" x2="500" y2="350" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+
+          <!-- Layer 4: Decision -->
+          <rect x="50" y="360" width="900" height="65" rx="8" fill="#ffffff" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="500" y="382" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1.5">LAYER 4 · CONFIDENCE + SIGNAL EMISSION</text>
+          <text x="500" y="408" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-style="italic" fill="#57534e">Confidence (0–26) → BUY · SELL · SHORT · HOLD</text>
+
+          <!-- Branch arrows -->
+          <line x1="300" y1="430" x2="300" y2="455" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+          <line x1="700" y1="430" x2="700" y2="455" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+
+          <!-- Layer 5a: Portfolio -->
+          <rect x="50" y="465" width="430" height="80" rx="8" fill="#fbfaf6" stroke="#e8dfcf" stroke-width="1.5"/>
+          <text x="265" y="487" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#8a8580" letter-spacing="1.5">PORTFOLIO MANAGEMENT</text>
+          <text x="265" y="510" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500">Inverse-volatility sizing</text>
+          <text x="265" y="528" text-anchor="middle" font-size="11" fill="#57534e">15% cap · 5% rebalance trigger · 10bps tx cost</text>
+
+          <!-- Layer 5b: Agent Fleet -->
+          <rect x="520" y="465" width="430" height="80" rx="8" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+          <text x="735" y="487" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#0f766e" letter-spacing="1.5">AGENT FLEET (24/7)</text>
+          <text x="735" y="510" text-anchor="middle" font-family="Fraunces, serif" font-size="14" font-weight="500" fill="#0f766e">Six rules-based agents</text>
+          <text x="735" y="528" text-anchor="middle" font-size="11" fill="#57534e">Data · Risk · Drift · Arbitrator · Rebalancer · Analyst</text>
+
+          <!-- Converging to dashboard -->
+          <line x1="265" y1="548" x2="265" y2="565" stroke="#581c87" stroke-width="1.5"/>
+          <line x1="735" y1="548" x2="735" y2="565" stroke="#581c87" stroke-width="1.5"/>
+          <line x1="265" y1="565" x2="735" y2="565" stroke="#581c87" stroke-width="1.5"/>
+          <line x1="500" y1="565" x2="500" y2="580" stroke="#581c87" stroke-width="1.5" marker-end="url(#arch-arrow)"/>
+
+          <!-- Layer 6: Dashboard -->
+          <rect x="50" y="588" width="900" height="22" rx="6" fill="#1c1917" stroke="#1c1917" stroke-width="1.5"/>
+          <text x="500" y="603" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#faf7f2" letter-spacing="1.5">REST API · 46+ ENDPOINTS · DASHBOARD · POSTGRES STORAGE</text>
+        </g>
+      </svg>
+    </div>
+
+    <p style="margin-top: 32px; color: var(--ink-muted); font-size: 0.9rem; font-family: var(--font-mono); line-height: 1.6;">
+      <strong style="color: var(--ink); font-family: var(--font-display); font-weight: 600;">Fig. 03 · System architecture.</strong>
+      Single Rust binary deployed via systemd on bare-metal Linux.
+      PostgreSQL is the single source of truth. SQLite handles historical archival.
+      Inference latency: &lt;50ms per asset, ~2s for the full 366-asset batch on six CPU cores.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== RESULTS ==================== -->
+<section class="section section-alt" id="results">
+  <div class="wrap">
+    <span class="eyebrow">The track record</span>
+    <h2 class="section-h2">45 days live.<br>Numbers, <em>unedited</em>.</h2>
+    <p class="section-lead">
+      Live since 15 March 2026. Every signal generated by a model trained only on data older than
+      the prediction. Below is what the system has actually produced — alongside what the
+      benchmark did over the same period.
+    </p>
+
+    <div class="results-grid">
+      <div class="results-table">
+        <div class="results-table-row">
+          <span class="rt-label">Actionable accuracy</span>
+          <span class="rt-value plum">54.8%</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">BUY accuracy (829 signals)</span>
+          <span class="rt-value">57.9%</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Expected value per signal</span>
+          <span class="rt-value green">+10 bps</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Profit factor</span>
+          <span class="rt-value">1.38</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Annualised Sharpe</span>
+          <span class="rt-value green">2.06</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Max drawdown</span>
+          <span class="rt-value">5.5%</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Total signals (resolved + pending)</span>
+          <span class="rt-value">877</span>
+        </div>
+        <div class="results-table-row">
+          <span class="rt-label">Portfolio return (45 days)</span>
+          <span class="rt-value plum">+4.67%</span>
+        </div>
+      </div>
+
+      <div class="results-screenshot">
+        <!-- Inline approximate replica of the dashboard chart -->
+        <svg class="screenshot-svg" viewBox="0 0 480 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live portfolio chart vs SPY benchmark">
+          <g font-family="Inter Tight, sans-serif" font-size="10" fill="#1c1917">
+            <!-- Frame -->
+            <rect x="0" y="0" width="480" height="280" fill="#fbfaf6" rx="4"/>
+
+            <!-- Y-axis labels -->
+            <text x="35" y="40" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$108k</text>
+            <text x="35" y="80" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$106k</text>
+            <text x="35" y="120" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$104k</text>
+            <text x="35" y="160" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$102k</text>
+            <text x="35" y="200" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$100k</text>
+            <text x="35" y="240" text-anchor="end" fill="#8a8580" font-family="JetBrains Mono, monospace" font-size="9">$98k</text>
+
+            <!-- Grid lines -->
+            <line x1="40" y1="40" x2="465" y2="40" stroke="#e8dfcf" stroke-width="0.5" stroke-dasharray="2,3"/>
+            <line x1="40" y1="80" x2="465" y2="80" stroke="#e8dfcf" stroke-width="0.5" stroke-dasharray="2,3"/>
+            <line x1="40" y1="120" x2="465" y2="120" stroke="#e8dfcf" stroke-width="0.5" stroke-dasharray="2,3"/>
+            <line x1="40" y1="160" x2="465" y2="160" stroke="#e8dfcf" stroke-width="0.5" stroke-dasharray="2,3"/>
+            <line x1="40" y1="200" x2="465" y2="200" stroke="#1c1917" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.5"/>
+            <line x1="40" y1="240" x2="465" y2="240" stroke="#e8dfcf" stroke-width="0.5" stroke-dasharray="2,3"/>
+
+            <!-- X-axis -->
+            <line x1="40" y1="255" x2="465" y2="255" stroke="#1c1917" stroke-width="0.8"/>
+            <text x="50" y="270" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8580">Mar 15</text>
+            <text x="170" y="270" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8580">Mar 29</text>
+            <text x="290" y="270" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8580">Apr 12</text>
+            <text x="420" y="270" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8580">Apr 29</text>
+
+            <!-- SPY Buy & Hold (dotted, plum-ish purple) -->
+            <path d="M 50,200 L 90,205 L 120,220 L 150,235 L 180,232 L 210,220 L 240,200 L 270,195 L 300,180 L 330,150 L 360,120 L 395,90 L 430,55 L 460,52"
+                  stroke="#9b8fff" stroke-width="2" fill="none" stroke-dasharray="4,4"/>
+
+            <!-- Alpha Signal Portfolio (solid teal) -->
+            <path d="M 50,200 L 80,195 L 110,205 L 140,225 L 170,240 L 200,238 L 230,220 L 260,195 L 290,165 L 320,150 L 350,135 L 380,118 L 415,108 L 460,95"
+                  stroke="#0f766e" stroke-width="2.5" fill="none"/>
+
+            <!-- Endpoint markers -->
+            <circle cx="460" cy="52" r="4" fill="#9b8fff"/>
+            <circle cx="460" cy="95" r="4" fill="#0f766e"/>
+
+            <text x="455" y="42" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#9b8fff" font-weight="600">$107,225</text>
+            <text x="455" y="115" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f766e" font-weight="600">$104,669</text>
+
+            <!-- Legend -->
+            <line x1="50" y1="20" x2="70" y2="20" stroke="#0f766e" stroke-width="2.5"/>
+            <text x="76" y="23" font-family="JetBrains Mono, monospace" font-size="9" fill="#1c1917">Alpha Signal</text>
+            <line x1="180" y1="20" x2="200" y2="20" stroke="#9b8fff" stroke-width="2" stroke-dasharray="4,4"/>
+            <text x="206" y="23" font-family="JetBrains Mono, monospace" font-size="9" fill="#1c1917">SPY buy &amp; hold</text>
+          </g>
+        </svg>
+        <div class="screenshot-caption">
+          <strong style="color: var(--ink); font-family: var(--font-display); font-weight: 600;">Portfolio value vs SPY benchmark.</strong>
+          $100,000 starting capital, 15 March → 29 April 2026. Alpha Signal at <strong>+4.67%</strong>;
+          SPY buy &amp; hold at <strong>+7.22%</strong>. The Alpha Signal line tracks the benchmark
+          with a smoother profile through the early-period drawdown — the trade-off the system is
+          deliberately set up to make.
+        </div>
+      </div>
+    </div>
+
+    <div class="results-context">
+      <p>
+        <strong>What 54.8% accuracy actually means.</strong>
+        In financial markets, a consistent edge of 4–6 percentage points above random (50%) is meaningful
+        when paired with disciplined position sizing and risk management. It produces positive expected
+        value per signal. The point is consistency across hundreds of signals, not any single trade.
+        The system is currently more conservative than buy &amp; hold in a strong-trend market, by design.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== WHY DIFFERENT ==================== -->
+<section class="section" id="different">
+  <div class="wrap">
+    <span class="eyebrow">What's different</span>
+    <h2 class="section-h2">Built for <em>scrutiny</em>,<br>not for the demo.</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>Backtest-only systems</th>
+          <th>Typical "AI trading"</th>
+          <th class="us">Alpha Signal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Track record</td>
+          <td>Historical fits</td>
+          <td>Cherry-picked windows</td>
+          <td class="us">Live since 15 Mar 2026</td>
+        </tr>
+        <tr>
+          <td>Model architecture</td>
+          <td>Single model</td>
+          <td>Black-box ensemble</td>
+          <td class="us">3 families + stacker + Platt</td>
+        </tr>
+        <tr>
+          <td>Monitoring</td>
+          <td>None</td>
+          <td>Manual oversight</td>
+          <td class="us">6 autonomous agents</td>
+        </tr>
+        <tr>
+          <td>Coverage</td>
+          <td>Small basket</td>
+          <td>One market</td>
+          <td class="us">366 stocks · US/UK/EU</td>
+        </tr>
+        <tr>
+          <td>Position sizing</td>
+          <td>Fixed lot</td>
+          <td>"By feel"</td>
+          <td class="us">Inverse-volatility weighted</td>
+        </tr>
+        <tr>
+          <td>Audit trail</td>
+          <td>Final P&amp;L only</td>
+          <td>Vague claims</td>
+          <td class="us">Every signal logged + resolved</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== TECH STACK ==================== -->
+<section class="section section-alt" id="tech">
+  <div class="wrap">
+    <span class="eyebrow">The stack</span>
+    <h2 class="section-h2">A single binary,<br>doing real <em>work</em>.</h2>
+    <p class="section-lead">
+      No microservices, no orchestration tier, no Python. Rust trains, predicts, serves and stores.
+      The agent fleet runs as part of the same binary on a different cadence.
+    </p>
+
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="tech-label">CORE ENGINE</div>
+        <div class="tech-name">Rust</div>
+        <div class="tech-desc">Memory-safe, zero-cost abstractions, parallel training across cores.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">ML FRAMEWORK</div>
+        <div class="tech-name">Candle + LightGBM</div>
+        <div class="tech-desc">Native neural networks plus gradient-boosted trees, no Python bridge.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">DATABASE</div>
+        <div class="tech-name">PostgreSQL</div>
+        <div class="tech-desc">Single source of truth for live signals, agent actions and audit trail.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">WEB API</div>
+        <div class="tech-name">Axum</div>
+        <div class="tech-desc">46+ REST endpoints for signals, portfolio, agent state, history.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">FRONTEND</div>
+        <div class="tech-name">React + TS</div>
+        <div class="tech-desc">Internal dashboard with charts, signal explorer and live status.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">DATA</div>
+        <div class="tech-name">Polygon · Yahoo</div>
+        <div class="tech-desc">Free public market data tiers. No paid feeds or institutional access.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">INFRA</div>
+        <div class="tech-name">Linux + systemd</div>
+        <div class="tech-desc">Self-hosted on bare metal. Single binary deployed as a service.</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-label">AUTH</div>
+        <div class="tech-name">OAuth 2.0</div>
+        <div class="tech-desc">Google and Microsoft sign-in for the dashboard. No user passwords stored.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA ==================== -->
+<section class="cta-block" id="contact">
+  <div class="cta-inner">
+    <div class="cta-eyebrow">Built to be honest · Designed to compound</div>
+    <h2 class="cta-h2">A hobby project, run with the <em>discipline</em> of a system that needs to last.</h2>
+    <p class="cta-sub">
+      Alpha Signal is a personal research project. Not financial advice. Not for sale. If you'd like
+      to talk about the architecture, the methodology, or what it took to get here, I'd love to hear
+      from you.
+    </p>
+    <div class="cta-btns">
+      <a href="https://www.linkedin.com/in/hassan-shuman" target="_blank" rel="noopener" class="btn btn-light">
+        Follow on LinkedIn
+        <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <a href="mailto:hassan@hassanshuman.co.uk" class="btn btn-ghost">Get in touch</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="footer-brand">
+    <span class="footer-brand-dot"></span>
+    Alpha Signal
+  </div>
+  <div class="footer-meta">
+    Built in Rust · Self-hosted · London · 2026<br>
+    Stats current as of 29 April 2026 · Updated weekly · Not financial advice<br>
+    <a href="https://hassanshuman.co.uk" target="_blank" rel="noopener">hassanshuman.co.uk</a>
+  </div>
+</footer>
+
+<script>
+// Mobile nav
+const burger = document.getElementById('burger');
+const mobileNav = document.getElementById('mobileNav');
+burger.addEventListener('click', () => mobileNav.classList.toggle('open'));
+document.querySelectorAll('.nav-mobile a').forEach(a => {
+  a.addEventListener('click', () => mobileNav.classList.remove('open'));
+});
+
+// Fade-in observer (lightweight)
+const fadeEls = document.querySelectorAll('.fade-up');
+if (fadeEls.length) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  fadeEls.forEach(el => io.observe(el));
+}
+</script>
+
+</body>
+</html>
